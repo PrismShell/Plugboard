@@ -1,0 +1,25 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+dist/
+
+# Plugins (now in separate repo: github.com/PrismShell/core-plugins)
+src/plugins/
+
+# .NET / Visual Studio
+*.user
+*.suo
+.vs/
+*.pdb
+
+# Signing keys / secrets
+*.key
+plugboard-private.key
+plugboard-public.key
+
+# OS
+Thumbs.db
+.DS_Store
+
+# machine-specific shortcut (absolute path)
+*.lnk

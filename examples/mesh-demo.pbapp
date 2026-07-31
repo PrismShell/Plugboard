@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Plugboard — Mesh Demo</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--dim:#94a3b8;
+        --accent:#22c55e;--accent2:#38bdf8;--warn:#f59e0b;--err:#ef4444;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);
+       font-size:13px;line-height:1.5;padding:24px;max-width:900px;margin:0 auto;}
+  h1{font-size:20px;font-weight:700;letter-spacing:.5px;}
+  h1 small{font-weight:400;color:var(--dim);font-size:13px;}
+  .lede{color:var(--dim);margin:8px 0 20px;}
+  .lede b{color:var(--accent2);}
+  .bar{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);}
+  .dot.on{background:var(--accent);box-shadow:0 0 7px var(--accent);}
+  .dot.off{background:var(--err);}
+  input{background:#0b1220;border:1px solid var(--line);color:var(--txt);
+        padding:7px 10px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;
+        padding:16px;margin-bottom:16px;}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:4px;}
+  .card p{color:var(--dim);margin-bottom:12px;font-size:12px;}
+  .flow{font-family:'Courier New',monospace;color:var(--dim);font-size:11px;margin-bottom:12px;}
+  .flow b{color:var(--txt);}
+  button{background:var(--accent);color:#04120a;border:none;padding:8px 16px;border-radius:5px;
+         font-weight:700;cursor:pointer;font-size:12px;}
+  button:hover{filter:brightness(1.1);}
+  button.sec{background:transparent;color:var(--accent2);border:1px solid var(--accent2);}
+  pre{background:#0b1220;border:1px solid var(--line);border-radius:6px;padding:12px;
+      margin-top:12px;font-size:12px;overflow:auto;max-height:280px;white-space:pre-wrap;color:#cbd5e1;}
+  .u{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+     text-transform:uppercase;letter-spacing:.5px;margin-right:6px;}
+  .u.svc{background:rgba(56,189,248,.15);color:var(--accent2);}
+  .u.conn{background:rgba(34,197,94,.15);color:var(--accent);}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .hl{color:var(--accent);font-weight:700;}
+</style>
+</head>
+<body>
+  <h1>Plugboard <small>— composition mesh demo</small></h1>
+  <p class="lede">This page is a <b>view</b>. It calls a <b>service</b> over HTTP, and the service
+     composes a <b>connector</b> in-process. Watch one unit call another.</p>
+
+  <div class="bar">
+    <span class="dot" id="dot"></span>
+    <span id="status">checking…</span>
+    <input id="base" value="http://localhost:9195" style="margin-left:auto;width:220px;">
+    <button class="sec" onclick="ping()">Reconnect</button>
+  </div>
+
+  <div class="card">
+    <h2>1 · What's loaded</h2>
+    <p>The live catalog — every unit the host mounted. <span class="u svc">svc</span> = service,
+       everything else = connector.</p>
+    <div class="row"><button class="sec" onclick="catalog()">GET /catalog</button></div>
+    <pre id="cat" style="display:none"></pre>
+  </div>
+
+  <div class="card">
+    <h2>2 · Mesh self-test <span class="u svc">service</span></h2>
+    <p>Runs anywhere — no Bloomberg terminal needed.</p>
+    <div class="flow">view → <b>svc/meshcheck</b> (service) → <b>ping/hello</b> (connector)</div>
+    <div class="row"><button onclick="meshcheck()">GET /svc/meshcheck</button></div>
+    <pre id="mesh" style="display:none"></pre>
+  </div>
+
+  <div class="card">
+    <h2>3 · Prices <span class="u svc">service</span> → Bloomberg <span class="u conn">connector</span></h2>
+    <p>The realistic case. Needs the Bloomberg connector deployed + a Terminal; otherwise you'll
+       see a clean "no unit registered for 'bloomberg/bdp'" — which itself proves the mesh is wired.</p>
+    <div class="flow">view → <b>svc/prices</b> (service) → <b>bloomberg/bdp</b> (connector)</div>
+    <div class="row">
+      <input id="secs" value="AAPL US Equity, MSFT US Equity" style="flex:1;min-width:240px;">
+      <button onclick="prices()">POST /svc/prices</button>
+    </div>
+    <pre id="px" style="display:none"></pre>
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const base = () => $('base').value.replace(/\/+$/,'');
+  const show = (id, obj) => { const p=$(id); p.style.display='block'; p.textContent = typeof obj==='string'?obj:JSON.stringify(obj,null,2); };
+
+  // No key, no header. Opened via "Open with Gateway", this page is served by the
+  // gateway at its own origin, so calls are same-origin and just work. A random website
+  // is cross-origin and can't call the capabilities at all.
+  const sbFetch = (url, opts={}) => fetch(url, opts);
+
+  async function ping(){
+    try{
+      const r = await (await sbFetch(base()+'/info')).json();
+      $('dot').className='dot on';
+      $('status').textContent = 'connected — '+r.data.service+' v'+r.data.version+' (pid '+r.data.pid+')';
+    }catch(e){ $('dot').className='dot off'; $('status').textContent='not reachable at '+base(); }
+  }
+  async function catalog(){
+    try{
+      const r = await (await sbFetch(base()+'/catalog')).json();
+      const lines = r.data.routes.map(x => (x.route.includes('/svc/')?'[svc] ':'[con] ')+x.method.padEnd(4)+' '+x.route+(x.summary?('  — '+x.summary):''));
+      show('cat', lines.join('\n'));
+    }catch(e){ show('cat','ERROR: '+e.message); }
+  }
+  async function meshcheck(){
+    try{
+      const r = await (await sbFetch(base()+'/svc/meshcheck')).json();
+      let note = '';
+      if(r.ok && r.data && r.data.composed && r.data.composed.message==='pong')
+        note = '\n\n// ↑ "composed" is exactly what the ping CONNECTOR returned.\n// The service called it via req.Call. Mesh works.';
+      show('mesh', JSON.stringify(r,null,2)+note);
+    }catch(e){ show('mesh','ERROR: '+e.message); }
+  }
+  async function prices(){
+    const securities = $('secs').value.split(',').map(s=>s.trim()).filter(Boolean);
+    try{
+      const r = await (await sbFetch(base()+'/svc/prices',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({securities})
+      })).json();
+      show('px', r);
+    }catch(e){ show('px','ERROR: '+e.message); }
+  }
+  ping();
+</script>
+</body>
+</html>

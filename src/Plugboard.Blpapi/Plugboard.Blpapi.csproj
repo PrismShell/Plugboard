@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The ONE managed BLPAPI in the process. This assembly is loaded once by the host
+         (default load context); every BLPAPI plugin shares it, so there is a single
+         managed wrapper over the process-global native blpapi3_64 and a single session. -->
+    <Reference Include="Bloomberglp.Blpapi">
+      <HintPath>..\..\..\local-gateway\bloomberg-dotnet-sdk\bin\net462\Bloomberglp.Blpapi.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

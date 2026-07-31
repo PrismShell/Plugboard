@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <!-- WinExe: no console window flashes when the shell verb runs the open helper.
+         It's a tray app with file logging, so it never needs a console. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>plugboard.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Ship the .pbapp shell icon (transparent plug) next to the exe so the file
+         association can reference a stable path independent of any other repo. -->
+    <Content Include="pbapp.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Plugboard.Contracts\Plugboard.Contracts.csproj" />
+    <!-- NOTE: Plugboard.Blpapi reference removed - Bloomberg SDK not available.
+         Bloomberg/CMP connectors won't load without it. Re-add when SDK is installed:
+         <ProjectReference Include="..\Plugboard.Blpapi\Plugboard.Blpapi.csproj" /> -->
+  </ItemGroup>
+</Project>

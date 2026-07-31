@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- NuGet SDK package: the one assembly a plugin author references.
+         See docs/10-plugin-sdk.md. Pack with:  dotnet pack src\Plugboard.Contracts -c Release -o dist\nuget -->
+    <PackageId>Plugboard.Contracts</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>deskkit</Authors>
+    <Company>deskkit</Company>
+    <Description>Plugin SDK for Plugboard: IPlugin, IEndpointRegistry, PluginRequest, RouteInfo/ParamInfo. Reference this to write a capability plugin.</Description>
+    <PackageTags>plugboard;plugin;sdk;gateway</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+</Project>
