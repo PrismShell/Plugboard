@@ -156,4 +156,14 @@ internal sealed class PluginLoadContext : AssemblyLoadContext
         var path = _resolver.ResolveAssemblyToPath(name);
         return path != null ? LoadFromAssemblyPath(path) : null;
     }
+
+    // Native dependencies (e.g. SQLite's e_sqlite3) live in the plugin's own
+    // runtimes/<rid>/native folder, described by its deps.json. Without this
+    // override the default context probes only next to the host exe, and any
+    // plugin carrying a native library fails its type initializer.
+    protected override IntPtr LoadUnmanagedDll(string name)
+    {
+        var path = _resolver.ResolveUnmanagedDllToPath(name);
+        return path != null ? LoadUnmanagedDllFromPath(path) : IntPtr.Zero;
+    }
 }
